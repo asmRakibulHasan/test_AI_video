@@ -5,18 +5,35 @@ import {
   quicksortDefaultProps,
   calculateQuicksortMetadata,
 } from "./QuicksortShort";
+import {
+  MergeSortCatsShort,
+  mergeSortCatsDefaultProps,
+  calculateMergeSortCatsMetadata,
+} from "./MergeSortCatsShort";
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <Composition
-      id="QuicksortShort"
-      component={QuicksortShort}
-      width={1080}
-      height={1920}
-      fps={30}
-      durationInFrames={600}
-      defaultProps={quicksortDefaultProps}
-      calculateMetadata={calculateQuicksortMetadata}
-    />
+    <>
+      <Composition
+        id="QuicksortShort"
+        component={QuicksortShort}
+        width={1080}
+        height={1920}
+        fps={30}
+        durationInFrames={600}
+        defaultProps={quicksortDefaultProps}
+        calculateMetadata={calculateQuicksortMetadata}
+      />
+      <Composition
+        id="MergeSortCatsShort"
+        component={MergeSortCatsShort}
+        width={1080}
+        height={1920}
+        fps={30}
+        durationInFrames={600}
+        defaultProps={mergeSortCatsDefaultProps}
+        calculateMetadata={calculateMergeSortCatsMetadata}
+      />
+    </>
   );
 };

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "remotion studio",
-    "render": "remotion render QuicksortShort out/quicksort-short.mp4",
+    "render:quicksort": "remotion render QuicksortShort out/quicksort-short.mp4",
+    "render:mergesort": "remotion render MergeSortCatsShort out/merge-sort-cats.mp4",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
