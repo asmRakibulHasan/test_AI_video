@@ -1,64 +1,72 @@
 import React, { useMemo } from "react";
 import { AbsoluteFill, useCurrentFrame, interpolate, Audio, Sequence, staticFile } from "remotion";
-import { buildMergeSortTrace, MERGE_SORT_PSEUDOCODE } from "./lib/mergeSortTrace";
+import { buildMergeSortTrace, MERGE_SORT_CPP } from "./lib/mergeSortTrace";
 import { CatBars } from "./components/CatBars";
 import { CodePanel } from "./components/CodePanel";
 import { Caption } from "./components/Caption";
 
 export type MergeSortCatsProps = {
   values: number[];
-  outroFrames: number;
   stepHoldFrames: number;
   /**
+   * Frames held on the final sorted state after the last step, so the
+   * success chime can ring out and the finished array is readable. There
+   * is no outro card — the video ends on the sorted cats themselves.
+   */
+  tailFrames: number;
+  /**
    * Optional filename of a music track placed in `public/`, e.g.
-   * "bg-music.mp3". Leave as "" to render with no audio at all — this
-   * project ships without an actual music file, so nothing plays until
-   * you add one and set this.
+   * "bg-music.mp3". Leave as "" for no background music — no music file
+   * ships with this project.
    */
   musicSrc: string;
   musicVolume: number;
   /** Plays public/tick.wav (synthesized, ships included) at every step. */
   tickSoundEnabled: boolean;
   tickVolume: number;
+  /** Plays public/success.wav (synthesized, ships included) once sorted. */
+  successSoundEnabled: boolean;
+  successVolume: number;
 };
 
 export const mergeSortCatsDefaultProps: MergeSortCatsProps = {
   values: [8, 3, 6, 1, 9, 2, 7, 4],
-  outroFrames: 70,
   stepHoldFrames: 18,
+  tailFrames: 55,
   musicSrc: "",
   musicVolume: 0.5,
   tickSoundEnabled: true,
   tickVolume: 0.4,
+  successSoundEnabled: true,
+  successVolume: 0.8,
 };
 
-// Duration is derived from however many steps this array produces. No
-// intro beat anymore — the video starts directly on the visualization.
+// Duration = every step, plus a short tail on the sorted state. No intro
+// card and no outro card — it starts and ends on the visualization.
 export const calculateMergeSortCatsMetadata = ({
   props,
 }: {
   props: MergeSortCatsProps;
 }) => {
   const steps = buildMergeSortTrace(props.values);
-  const durationInFrames = steps.length * props.stepHoldFrames + props.outroFrames;
+  const durationInFrames = steps.length * props.stepHoldFrames + props.tailFrames;
   return { durationInFrames };
 };
 
 export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
   values,
-  outroFrames,
   stepHoldFrames,
+  tailFrames,
   musicSrc,
   musicVolume,
   tickSoundEnabled,
   tickVolume,
+  successSoundEnabled,
+  successVolume,
 }) => {
   const frame = useCurrentFrame();
   const steps = useMemo(() => buildMergeSortTrace(values), [values]);
   const maxValue = Math.max(...values);
-
-  const bodyEnd = steps.length * stepHoldFrames;
-  const inOutro = frame >= bodyEnd;
 
   const rawStepIndex = Math.floor(frame / stepHoldFrames);
   const stepIndex = Math.min(Math.max(rawStepIndex, 0), steps.length - 1);
@@ -66,10 +74,10 @@ export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
   const prevStep = steps[Math.max(0, stepIndex - 1)];
   const currentStep = steps[stepIndex];
 
-  const outroOpacity = interpolate(frame, [bodyEnd, bodyEnd + 15], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  // The final "done" step is where the array is fully sorted — the chime
+  // fires exactly there, and ticks stop so they don't step on it.
+  const finalStepIndex = steps.length - 1;
+  const successFrame = finalStepIndex * stepHoldFrames;
 
   const captionOpacity = interpolate(
     localFrame,
@@ -78,92 +86,72 @@ export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
+  // On the final sorted state, hold the caption fully visible instead of
+  // fading it out, since the video ends here.
+  const isFinalStep = stepIndex === finalStepIndex;
+  const finalCaptionOpacity = interpolate(localFrame, [0, 8], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0b1220" }}>
       {musicSrc.length > 0 && <Audio src={staticFile(musicSrc)} volume={musicVolume} />}
 
       {tickSoundEnabled &&
-        steps.map((_, i) => (
+        steps.slice(0, finalStepIndex).map((_, i) => (
           <Sequence key={i} from={i * stepHoldFrames} durationInFrames={stepHoldFrames}>
             <Audio src={staticFile("tick.wav")} volume={tickVolume} />
           </Sequence>
         ))}
 
-      {!inOutro && (
-        <AbsoluteFill style={{ flexDirection: "column" }}>
-          {/* Top ~38% — cat visualization */}
-          <div
-            style={{
-              height: "38%",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <CatBars
-              prevStep={prevStep}
-              currentStep={currentStep}
-              localFrame={localFrame}
-              transitionFrames={Math.min(12, stepHoldFrames - 2)}
-              maxValue={maxValue}
-            />
-            <div style={{ opacity: captionOpacity, marginTop: 16 }}>
-              <Caption text={currentStep.caption} />
-            </div>
-          </div>
-
-          {/* Bottom ~62% — large, auto-centered C++ pseudocode */}
-          <div
-            style={{
-              height: "62%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              borderTop: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <CodePanel lines={MERGE_SORT_PSEUDOCODE} activeLineIds={currentStep.activeLines} />
-          </div>
-        </AbsoluteFill>
+      {successSoundEnabled && (
+        <Sequence from={successFrame} durationInFrames={stepHoldFrames + tailFrames}>
+          <Audio src={staticFile("success.wav")} volume={successVolume} />
+        </Sequence>
       )}
 
-      {inOutro && (
-        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-          <div style={{ opacity: outroOpacity, textAlign: "center", padding: "0 60px" }}>
-            <div
-              style={{
-                color: "#22c55e",
-                fontSize: 56,
-                fontWeight: 800,
-                fontFamily: "Inter, Arial, sans-serif",
-              }}
-            >
-              Sorted ✅
-            </div>
-            <div
-              style={{
-                color: "#e2e8f0",
-                fontSize: 30,
-                marginTop: 20,
-                fontFamily: "Inter, Arial, sans-serif",
-              }}
-            >
-              O(n log n) — worst case, every time
-            </div>
-            <div
-              style={{
-                color: "#64748b",
-                fontSize: 26,
-                marginTop: 40,
-                fontFamily: "Inter, Arial, sans-serif",
-              }}
-            >
-              Follow for more algorithms, visualized
-            </div>
+      <AbsoluteFill style={{ flexDirection: "column" }}>
+        {/* Top ~38% — cat visualization */}
+        <div
+          style={{
+            height: "38%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <CatBars
+            prevStep={prevStep}
+            currentStep={currentStep}
+            localFrame={localFrame}
+            transitionFrames={Math.min(12, stepHoldFrames - 2)}
+            maxValue={maxValue}
+          />
+          <div
+            style={{
+              opacity: isFinalStep ? finalCaptionOpacity : captionOpacity,
+              marginTop: 16,
+            }}
+          >
+            <Caption text={currentStep.caption} />
           </div>
-        </AbsoluteFill>
-      )}
+        </div>
+
+        {/* Bottom ~62% — large, auto-centered C++ */}
+        <div
+          style={{
+            height: "62%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <CodePanel lines={MERGE_SORT_CPP} activeLineIds={currentStep.activeLines} />
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

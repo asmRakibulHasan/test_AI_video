@@ -29,32 +29,35 @@ export interface CodeLine {
   text: string;
 }
 
-// C++ pseudocode shown in the bottom panel. Line `id`s are referenced by
-// each MergeSortStep's `activeLines` so the panel can highlight whichever
-// line is "executing" for that step.
-export const MERGE_SORT_PSEUDOCODE: CodeLine[] = [
-  { id: 1, text: "void mergeSort(int arr[], int l, int r) {" },
-  { id: 2, text: "    if (l >= r) return;" },
-  { id: 3, text: "    int mid = (l + r) / 2;" },
-  { id: 4, text: "    mergeSort(arr, l, mid);" },
-  { id: 5, text: "    mergeSort(arr, mid + 1, r);" },
-  { id: 6, text: "    merge(arr, l, mid, r);" },
-  { id: 7, text: "}" },
-  { id: 8, text: "" },
-  { id: 9, text: "void merge(int arr[], int l, int m, int r) {" },
-  { id: 10, text: "    vector<int> temp;" },
-  { id: 11, text: "    int i = l, j = m + 1;" },
-  { id: 12, text: "    while (i <= m && j <= r) {" },
-  { id: 13, text: "        if (arr[i] <= arr[j])" },
-  { id: 14, text: "            temp.push_back(arr[i++]);" },
-  { id: 15, text: "        else" },
-  { id: 16, text: "            temp.push_back(arr[j++]);" },
-  { id: 17, text: "    }" },
-  { id: 18, text: "    while (i <= m) temp.push_back(arr[i++]);" },
-  { id: 19, text: "    while (j <= r) temp.push_back(arr[j++]);" },
-  { id: 20, text: "    for (int k = l; k <= r; k++)" },
-  { id: 21, text: "        arr[k] = temp[k - l];" },
-  { id: 22, text: "}" },
+// Real, compilable C++ (not pseudo-syntax) shown in the bottom panel.
+// Line `id`s are referenced by each MergeSortStep's `activeLines` so the
+// panel can highlight whichever line is executing for that step.
+export const MERGE_SORT_CPP: CodeLine[] = [
+  { id: 1, text: "#include <vector>" },
+  { id: 2, text: "using namespace std;" },
+  { id: 3, text: "" },
+  { id: 4, text: "void merge(vector<int>& a, int l, int m, int r) {" },
+  { id: 5, text: "    vector<int> tmp;" },
+  { id: 6, text: "    int i = l, j = m + 1;" },
+  { id: 7, text: "    while (i <= m && j <= r) {" },
+  { id: 8, text: "        if (a[i] <= a[j])" },
+  { id: 9, text: "            tmp.push_back(a[i++]);" },
+  { id: 10, text: "        else" },
+  { id: 11, text: "            tmp.push_back(a[j++]);" },
+  { id: 12, text: "    }" },
+  { id: 13, text: "    while (i <= m) tmp.push_back(a[i++]);" },
+  { id: 14, text: "    while (j <= r) tmp.push_back(a[j++]);" },
+  { id: 15, text: "    for (int k = l; k <= r; ++k)" },
+  { id: 16, text: "        a[k] = tmp[k - l];" },
+  { id: 17, text: "}" },
+  { id: 18, text: "" },
+  { id: 19, text: "void mergeSort(vector<int>& a, int l, int r) {" },
+  { id: 20, text: "    if (l >= r) return;" },
+  { id: 21, text: "    int mid = l + (r - l) / 2;" },
+  { id: 22, text: "    mergeSort(a, l, mid);" },
+  { id: 23, text: "    mergeSort(a, mid + 1, r);" },
+  { id: 24, text: "    merge(a, l, mid, r);" },
+  { id: 25, text: "}" },
 ];
 
 /**
@@ -87,7 +90,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
         mid,
         high,
         compareIndices: [i, j],
-        activeLines: [12, 13],
+        activeLines: [7, 8],
         type: "compare",
         caption: `${tokens[i].value} vs ${tokens[j].value}`,
       });
@@ -106,7 +109,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
         mid,
         high,
         compareIndices: null,
-        activeLines: [18],
+        activeLines: [13],
         type: "drain-left",
         caption: "Copy remaining left run",
       });
@@ -122,7 +125,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
         mid,
         high,
         compareIndices: null,
-        activeLines: [19],
+        activeLines: [14],
         type: "drain-right",
         caption: "Copy remaining right run",
       });
@@ -143,7 +146,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
       mid,
       high,
       compareIndices: null,
-      activeLines: [20, 21],
+      activeLines: [15, 16],
       type: "writeback",
       caption: "Merged run written back — sorted",
     });
@@ -157,7 +160,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
         mid: null,
         high,
         compareIndices: null,
-        activeLines: [2],
+        activeLines: [20],
         type: "base-case",
         caption: "Single element — already sorted",
       });
@@ -169,7 +172,7 @@ export function buildMergeSortTrace(input: number[]): MergeSortStep[] {
       mid,
       high,
       compareIndices: null,
-      activeLines: [3],
+      activeLines: [21],
       type: "divide",
       caption: `Split [${low}..${high}] at mid`,
     });
