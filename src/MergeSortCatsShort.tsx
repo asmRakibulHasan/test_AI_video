@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { AbsoluteFill, useCurrentFrame, interpolate } from "remotion";
+import { AbsoluteFill, useCurrentFrame, interpolate, Audio, Sequence, staticFile } from "remotion";
 import { buildMergeSortTrace, MERGE_SORT_PSEUDOCODE } from "./lib/mergeSortTrace";
 import { CatBars } from "./components/CatBars";
 import { CodePanel } from "./components/CodePanel";
@@ -7,59 +7,64 @@ import { Caption } from "./components/Caption";
 
 export type MergeSortCatsProps = {
   values: number[];
-  introFrames: number;
   outroFrames: number;
   stepHoldFrames: number;
+  /**
+   * Optional filename of a music track placed in `public/`, e.g.
+   * "bg-music.mp3". Leave as "" to render with no audio at all — this
+   * project ships without an actual music file, so nothing plays until
+   * you add one and set this.
+   */
+  musicSrc: string;
+  musicVolume: number;
+  /** Plays public/tick.wav (synthesized, ships included) at every step. */
+  tickSoundEnabled: boolean;
+  tickVolume: number;
 };
 
 export const mergeSortCatsDefaultProps: MergeSortCatsProps = {
   values: [8, 3, 6, 1, 9, 2, 7, 4],
-  introFrames: 45,
   outroFrames: 70,
   stepHoldFrames: 18,
+  musicSrc: "",
+  musicVolume: 0.5,
+  tickSoundEnabled: true,
+  tickVolume: 0.4,
 };
 
-// Duration is derived from however many steps this array produces, same
-// pattern as QuicksortShort.
+// Duration is derived from however many steps this array produces. No
+// intro beat anymore — the video starts directly on the visualization.
 export const calculateMergeSortCatsMetadata = ({
   props,
 }: {
   props: MergeSortCatsProps;
 }) => {
   const steps = buildMergeSortTrace(props.values);
-  const durationInFrames =
-    props.introFrames + steps.length * props.stepHoldFrames + props.outroFrames;
+  const durationInFrames = steps.length * props.stepHoldFrames + props.outroFrames;
   return { durationInFrames };
 };
 
 export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
   values,
-  introFrames,
   outroFrames,
   stepHoldFrames,
+  musicSrc,
+  musicVolume,
+  tickSoundEnabled,
+  tickVolume,
 }) => {
   const frame = useCurrentFrame();
   const steps = useMemo(() => buildMergeSortTrace(values), [values]);
   const maxValue = Math.max(...values);
 
-  const bodyStart = introFrames;
-  const bodyEnd = introFrames + steps.length * stepHoldFrames;
-
-  const inIntro = frame < bodyStart;
+  const bodyEnd = steps.length * stepHoldFrames;
   const inOutro = frame >= bodyEnd;
 
-  const rawStepIndex = Math.floor((frame - bodyStart) / stepHoldFrames);
+  const rawStepIndex = Math.floor(frame / stepHoldFrames);
   const stepIndex = Math.min(Math.max(rawStepIndex, 0), steps.length - 1);
-  const localFrame = frame - (bodyStart + stepIndex * stepHoldFrames);
+  const localFrame = frame - stepIndex * stepHoldFrames;
   const prevStep = steps[Math.max(0, stepIndex - 1)];
   const currentStep = steps[stepIndex];
-
-  const introOpacity = interpolate(
-    frame,
-    [0, 15, introFrames - 10, introFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
 
   const outroOpacity = interpolate(frame, [bodyEnd, bodyEnd + 15], [0, 1], {
     extrapolateLeft: "clamp",
@@ -75,42 +80,21 @@ export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0b1220" }}>
-      {inIntro && (
-        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-          <div style={{ opacity: introOpacity, textAlign: "center", padding: "0 60px" }}>
-            <div
-              style={{
-                color: "#ffffff",
-                fontSize: 60,
-                fontWeight: 800,
-                fontFamily: "Inter, Arial, sans-serif",
-                lineHeight: 1.2,
-              }}
-            >
-              Merge Sort,
-              <br />
-              With Cats 🐱
-            </div>
-            <div
-              style={{
-                color: "#94a3b8",
-                fontSize: 28,
-                marginTop: 20,
-                fontFamily: "Inter, Arial, sans-serif",
-              }}
-            >
-              O(n log n) — guaranteed, every time
-            </div>
-          </div>
-        </AbsoluteFill>
-      )}
+      {musicSrc.length > 0 && <Audio src={staticFile(musicSrc)} volume={musicVolume} />}
 
-      {!inIntro && !inOutro && (
+      {tickSoundEnabled &&
+        steps.map((_, i) => (
+          <Sequence key={i} from={i * stepHoldFrames} durationInFrames={stepHoldFrames}>
+            <Audio src={staticFile("tick.wav")} volume={tickVolume} />
+          </Sequence>
+        ))}
+
+      {!inOutro && (
         <AbsoluteFill style={{ flexDirection: "column" }}>
-          {/* Top 50% — cat visualization */}
+          {/* Top ~38% — cat visualization */}
           <div
             style={{
-              height: "50%",
+              height: "38%",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -124,15 +108,15 @@ export const MergeSortCatsShort: React.FC<MergeSortCatsProps> = ({
               transitionFrames={Math.min(12, stepHoldFrames - 2)}
               maxValue={maxValue}
             />
-            <div style={{ opacity: captionOpacity, marginTop: 20 }}>
+            <div style={{ opacity: captionOpacity, marginTop: 16 }}>
               <Caption text={currentStep.caption} />
             </div>
           </div>
 
-          {/* Bottom 50% — C++ pseudocode with active-line highlight */}
+          {/* Bottom ~62% — large, auto-centered C++ pseudocode */}
           <div
             style={{
-              height: "50%",
+              height: "62%",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",

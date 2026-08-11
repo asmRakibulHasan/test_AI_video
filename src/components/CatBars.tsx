@@ -1,13 +1,29 @@
 import React from "react";
 import { interpolate, Easing } from "remotion";
 import type { MergeSortStep } from "../lib/mergeSortTrace";
+import { CatIcon } from "./CatIcon";
 
-const COLORS = {
-  default: "#334155", // slate
-  compare: "#22d3ee", // cyan
-  sorted: "#22c55e", // green
+const STATE_COLORS = {
+  default: "#334155", // slate ring
+  compare: "#22d3ee", // cyan ring
+  sorted: "#22c55e", // green ring
   activeRange: "rgba(245, 158, 11, 0.55)", // amber
 };
+
+// Distinct, bright cat colors so every cat is easy to tell apart and pops
+// against the dark background — cycled by token id.
+const CAT_PALETTE = [
+  "#f4a261",
+  "#e76f51",
+  "#2a9d8f",
+  "#e9c46a",
+  "#f28482",
+  "#8ecae6",
+  "#cdb4db",
+  "#ffb4a2",
+];
+
+const catColorFor = (id: number) => CAT_PALETTE[id % CAT_PALETTE.length];
 
 interface CatBarsProps {
   prevStep: MergeSortStep;
@@ -25,7 +41,7 @@ export const CatBars: React.FC<CatBarsProps> = ({
   localFrame,
   transitionFrames,
   maxValue,
-  width = 900,
+  width = 940,
   laneHeight = 300,
 }) => {
   const slotCount = currentStep.tokens.length;
@@ -56,7 +72,7 @@ export const CatBars: React.FC<CatBarsProps> = ({
             top: 0,
             width: rangeWidth - 8,
             height: laneHeight + 50,
-            border: `3px dashed ${COLORS.activeRange}`,
+            border: `3px dashed ${STATE_COLORS.activeRange}`,
             borderRadius: 20,
           }}
         />
@@ -67,13 +83,13 @@ export const CatBars: React.FC<CatBarsProps> = ({
         const fromSlot = prevSlot === null ? slotIndex : prevSlot;
         const x = interpolate(progress, [0, 1], [fromSlot * slotWidth, slotIndex * slotWidth]);
 
-        const minSize = 42;
-        const maxSize = 92;
+        const minSize = 46;
+        const maxSize = 96;
         const size = minSize + (token.value / maxValue) * (maxSize - minSize);
 
-        let ring = COLORS.default;
-        if (currentStep.sortedIndices.includes(slotIndex)) ring = COLORS.sorted;
-        if (currentStep.compareIndices?.includes(slotIndex)) ring = COLORS.compare;
+        let ring = STATE_COLORS.default;
+        if (currentStep.sortedIndices.includes(slotIndex)) ring = STATE_COLORS.sorted;
+        if (currentStep.compareIndices?.includes(slotIndex)) ring = STATE_COLORS.compare;
 
         return (
           <div
@@ -90,19 +106,17 @@ export const CatBars: React.FC<CatBarsProps> = ({
           >
             <div
               style={{
-                width: size + 24,
-                height: size + 24,
+                width: size + 26,
+                height: size + 26,
                 borderRadius: "50%",
                 backgroundColor: `${ring}22`,
                 border: `4px solid ${ring}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: size,
-                lineHeight: 1,
               }}
             >
-              🐱
+              <CatIcon size={size} color={catColorFor(token.id)} />
             </div>
             <div
               style={{
