@@ -135,3 +135,56 @@ an array of steps; the composition just picks `steps[frame / stepHoldFrames]`.
 This is the pattern to reuse for any future algorithm short (sorting, graph
 traversal, DP tables, etc.) — swap in a new trace generator, same rendering
 shell.
+
+---
+
+## 3. SqlJoinsShort — "SQL JOINS" for Shohoj Coding
+
+A 15.0s (450 frame) vertical explainer covering all four join types on one
+persistent screen. Render:
+```bash
+npm run render:sqljoins    # -> out/shohoj-sql-joins.mp4
+```
+
+### Timeline
+| Frames | Beat |
+|---|---|
+| 0–29 | Header, rail, and stage fade/slide in |
+| 30–119 | **INNER JOIN** — 2 rows |
+| 120–209 | **LEFT JOIN** — 3 rows |
+| 210–299 | **RIGHT JOIN** — 3 rows |
+| 300–389 | **FULL OUTER JOIN** — 4 rows |
+| 390–449 | Finale: "Same data. Four answers." + recap + `SAVE THIS ↓` |
+
+Within each 90-frame section: query types itself (f4–34) → match arcs draw
+and unmatched rows resolve (f30–62) → result rows land one at a time
+(from f52, every 9 frames, each with a tick) → row-count badge pops.
+
+### Customize
+Edit `sqlJoinsDefaultProps` in `src/SqlJoinsShort.tsx` for pacing, or:
+- **Data:** `STUDENTS` / `SCORES` in `src/lib/sqlJoins.ts`. The join results,
+  row counts, NULL placement, and rail numbers are all *computed* from that
+  data — change the arrays and everything downstream follows automatically.
+- **Colors / fonts:** `src/lib/theme.ts` (single token file).
+- **Brand text:** `BRAND` and `SERIES` in `src/lib/theme.ts`.
+
+### Bengali text
+The tagline is Latin script by default. Headless Chrome on Linux render
+machines typically ships no Bengali font, so Bengali would export as empty
+tofu boxes — the same class of bug as the black-cat emoji. To use Bengali:
+1. Put a Bengali font file (e.g. `NotoSansBengali-Bold.ttf`) in `public/`
+2. Add an `@font-face` for it and wait for it to load with
+   `@remotion/google-fonts` or `document.fonts.ready` via `delayRender`
+3. Swap the tagline string in `src/components/JoinHeader.tsx`
+
+### Files
+```
+src/SqlJoinsShort.tsx           # composition + 15s timeline
+src/lib/sqlJoins.ts             # data + join result computation
+src/lib/theme.ts                # design tokens (colors, fonts)
+src/components/JoinHeader.tsx   # brand bar + title
+src/components/JoinRail.tsx     # 4-segment progress rail
+src/components/JoinStage.tsx    # source tables + curved match arcs
+src/components/SqlLine.tsx      # typewriter query
+src/components/ResultPanel.tsx  # result rows landing + NULL cells
+```

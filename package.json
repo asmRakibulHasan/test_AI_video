@@ -6,7 +6,8 @@
     "start": "remotion studio",
     "render:quicksort": "remotion render QuicksortShort out/quicksort-short.mp4",
     "render:mergesort": "remotion render MergeSortCatsShort out/merge-sort-cats.mp4",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "render:sqljoins": "remotion render SqlJoinsShort out/shohoj-sql-joins.mp4"
   },
   "dependencies": {
     "react": "^18.3.1",
