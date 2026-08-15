@@ -11,6 +11,11 @@ import {
   calculateMergeSortCatsMetadata,
 } from "./MergeSortCatsShort";
 import {
+  InvertTreeShort,
+  invertTreeDefaultProps,
+  calculateInvertTreeMetadata,
+} from "./InvertTreeShort";
+import {
   SqlJoinsShort,
   sqlJoinsDefaultProps,
   calculateSqlJoinsMetadata,
@@ -48,6 +53,16 @@ export const RemotionRoot: React.FC = () => {
         durationInFrames={450}
         defaultProps={sqlJoinsDefaultProps}
         calculateMetadata={calculateSqlJoinsMetadata}
+      />
+      <Composition
+        id="InvertTreeShort"
+        component={InvertTreeShort}
+        width={1080}
+        height={1920}
+        fps={30}
+        durationInFrames={450}
+        defaultProps={invertTreeDefaultProps}
+        calculateMetadata={calculateInvertTreeMetadata}
       />
     </>
   );

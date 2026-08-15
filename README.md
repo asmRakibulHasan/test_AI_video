@@ -188,3 +188,58 @@ src/components/JoinStage.tsx    # source tables + curved match arcs
 src/components/SqlLine.tsx      # typewriter query
 src/components/ResultPanel.tsx  # result rows landing + NULL cells
 ```
+
+---
+
+## 4. InvertTreeShort — "Invert a Binary Tree" for Shohoj Coding
+
+A 15.0s (450 frame) recursion explainer: a 7-node binary tree mirrors itself
+bottom-up while a C++ panel highlights the executing line. Render:
+```bash
+npm run render:inverttree    # -> out/shohoj-invert-tree.mp4
+```
+
+### Timeline
+| Frames | Beat |
+|---|---|
+| 0–25 | Brand, title, tree fade/slide in |
+| 26–421 | 36 recursion steps × 11 frames each |
+| 422–449 | Final mirrored tree holds, chime rings, `SAVE THIS ↓` |
+
+### Node color states
+| Color | Meaning |
+|---|---|
+| Slate (idle) | Not visited yet |
+| **Sky** `#38bdf8` | On the call stack right now |
+| **Orange** `#fb923c` | The two children being swapped this instant |
+| **Teal** `#2dd4bf` | Subtree finished and mirrored |
+
+### How the animation works
+Node positions come from an **in-order walk of the current tree** — a node's
+x slot is its index in that walk. Swapping two children reverses the walk
+for that subtree, so mirrored nodes slide to mirrored positions with no
+special-case animation code. Node ids stay stable across steps, so a swap
+reads as two chips gliding past each other rather than values blinking.
+
+The trace is verified: starting in-order `1,3,4,5,7,8,9` becomes
+`9,8,7,5,4,3,1` — an exact reversal, i.e. a correct full mirror.
+
+### Customize
+- **Tree shape/values:** the `build()` function in `src/lib/invertTree.ts`.
+  Step count, duration, captions, and layout all follow automatically —
+  but note more than 7 nodes gets cramped on a phone screen, and pushes the
+  runtime past 15s unless you lower `stepFrames`.
+- **Pacing:** `stepFrames` in `invertTreeDefaultProps`.
+- **Colors:** `src/lib/treeTheme.ts`.
+- **C++ source:** `CPP_LINES` in `src/lib/invertTree.ts` — keep the `id`s in
+  sync with the `activeLine` values used in `buildTreeTrace()`.
+
+### Files
+```
+src/InvertTreeShort.tsx          # composition + 15s timeline
+src/lib/invertTree.ts            # tree model, recursion trace, layout, C++ source
+src/lib/treeTheme.ts             # cool teal/indigo design tokens
+src/components/TreeCanvas.tsx    # animated SVG tree + mirror axis
+src/components/CallStackBar.tsx  # live recursion stack chips
+src/components/CppPanel.tsx      # C++ panel with syntax highlight
+```
